@@ -4,9 +4,14 @@ const userSchema = new mongoose.Schema(
   {
     first_name: { type: String, required: true },
     last_name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     phone: { type: String },
+    role: {
+      type: String,
+      enum: ["artist_manager", "super_admin", "user"],
+      default: "user",
+    },
     dob: { type: Date },
     gender: { type: String },
     address: { type: String },
@@ -14,6 +19,4 @@ const userSchema = new mongoose.Schema(
   { timestamps: true },
 ); // tracks createdAt, updatedAt
 
-const User = mongoose.model("User", userSchema);
-
-module.exports = User;
+export const User = mongoose.model("User", userSchema);
