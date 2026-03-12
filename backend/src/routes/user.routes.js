@@ -22,7 +22,7 @@ router.post("/add-user", verifyJWT, authorizeRoles("super_admin"), createUser);
 
 router.put("/update-user/:id", verifyJWT, authorizeRoles("super_admin"), updateUser);
 router.delete("/delete-user/:id", verifyJWT, authorizeRoles("super_admin"), deleteUser);
-router.get("all-users", verifyJWT, authorizeRoles("super_admin"), getAllUsers);
+router.get("/all-users", verifyJWT, authorizeRoles("super_admin"), getAllUsers);
 
 
 // Example of role-based route

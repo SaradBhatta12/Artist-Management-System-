@@ -39,25 +39,13 @@ export const getAllMusics = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const search = req.query.search || "";
+    const { id } = req.query;
 
-    const query = {
-      $or: [
-        { title: { $regex: search, $options: "i" } },
-        { album_name: { $regex: search, $options: "i" } },
-        { genre: { $regex: search, $options: "i" } },
-      ],
-    };
-
-    // const musics = await Music.find(query)
-    //   .populate("artist_id", "name")
-    //   .limit(limit)
-    //   .skip((page - 1) * limit);
-
-    // using aggregations 
     const musics = await Music.aggregate([
       {
-        $match: query,
+        $match: {
+          artist_id: new mongoose.Types.ObjectId(id),
+        },
       },
       {
         $lookup: {
@@ -88,12 +76,16 @@ export const getAllMusics = async (req, res, next) => {
       },
     ]);
 
-    const totalMusics = await Music.countDocuments(query);
+    const totalMusics = await Music.countDocuments(
+      {
+        artist_id: new mongoose.Types.ObjectId(id),
+      }
+    );
     const totalPages = Math.ceil(totalMusics / limit);
 
     return res.status(200).json({
       success: true,
-      musics: musics[0],
+      musics,
       total: totalPages,
       page,
       limit,
@@ -149,6 +141,9 @@ export const deleteMusic = async (req, res, next) => {
     }
 
     await Music.findByIdAndDelete(req.params.id);
+    const artist = await Artist.findById(music.artist_id);
+    artist.no_of_albums_released -= 1;
+    await artist.save();
 
     return res.status(200).json({
       success: true,

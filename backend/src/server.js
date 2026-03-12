@@ -6,14 +6,18 @@ import musicRoutes from "./routes/music.routes.js";
 import artistRoutes from "./routes/artist.routes.js";
 import cookieParser from "cookie-parser";
 import { errorHandler } from "./middlewares/error.middleware.js";
-
+import cors from "cors"
 // Load env vars
 dotenv.config();
-
 // Connect to MongoDB
 connectDB();
 
 const app = express();
+app.use(cors({
+  origin: "http://localhost:5173",
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true,
+}))
 
 
 // Middleware

@@ -34,7 +34,6 @@ export const registerUser = async (req, res, next) => {
         .status(201).json({
           success: true,
           user: user,
-          token,
         });
     } else {
       return res.status(400).json({ success: false, message: "Invalid user data" });
