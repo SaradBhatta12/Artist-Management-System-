@@ -5,9 +5,7 @@ const artistSchema = new mongoose.Schema({
   gender: { type: String },
   address: { type: String },
   first_release_year: { type: Number },
-  no_of_albums_released: { type: Number },
+  no_of_albums_released: { type: Number, default: 0 },
 });
 
-const Artist = mongoose.model("Artist", artistSchema);
-
-module.exports = Artist;
+export const Artist = mongoose.model("Artist", artistSchema);

@@ -15,14 +15,16 @@ connectDB();
 
 const app = express();
 
+
 // Middleware
 app.use(express.json()); // parse JSON requests
 app.use(cookieParser());
 
+
 // Example route
-app.use("/user", userRoutes);
-app.use("/music", musicRoutes);
-app.use("/artist", artistRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/music", musicRoutes);
+app.use("/api/artist", artistRoutes);
 
 // Error Handler Middleware
 app.use(errorHandler);

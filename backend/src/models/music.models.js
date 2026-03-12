@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const musicSchema = new mongoose.Schema(
   {
     artist_id: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
       ref: "Artist", // reference to Artist model
     },
@@ -14,6 +14,4 @@ const musicSchema = new mongoose.Schema(
   { timestamps: true },
 ); // optional: tracks createdAt, updatedAt
 
-const Music = mongoose.model("Music", musicSchema);
-
-module.exports = Music;
+export const Music = mongoose.model("Music", musicSchema);
