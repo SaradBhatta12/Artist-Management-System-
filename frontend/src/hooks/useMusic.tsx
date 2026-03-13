@@ -4,14 +4,14 @@ import axios from "axios";
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URI || "http://localhost:3000";
 
 export interface MusicData {
-  _id?: string;
+  id?: string;
   artist_id: string;
   title: string;
   album_name?: string;
   genre?: string;
   artist?: {
     name: string;
-    _id: string;
+    id: string;
   };
 }
 

@@ -61,8 +61,8 @@ const Albums = () => {
     if (!id) return;
 
     let result;
-    if (editingSong?._id) {
-      result = await updateMusicInfo(editingSong._id, formData);
+    if (editingSong?.id) {
+      result = await updateMusicInfo(editingSong.id, formData);
     } else {
       result = await addMusic({ ...formData, artist_id: id } as MusicData);
     }
@@ -156,7 +156,7 @@ const Albums = () => {
           </tr>
         ) : (
           musics.map((song) => (
-            <tr key={song._id} className="hover:bg-gray-50 transition border-b border-gray-100 last:border-0">
+            <tr key={song.id} className="hover:bg-gray-50 transition border-b border-gray-100 last:border-0">
               <td className="px-6 py-4 font-semibold text-gray-900">{song.title}</td>
               <td className="px-6 py-4 text-gray-600 italic">"{song.album_name || "Single"}"</td>
               <td className="px-6 py-4">
@@ -169,7 +169,7 @@ const Albums = () => {
                   <Button variant="secondary" size="sm" onClick={() => handleEdit(song)}>
                     Edit
                   </Button>
-                  <Button variant="danger" size="sm" onClick={() => handleDelete(song._id!)}>
+                  <Button variant="danger" size="sm" onClick={() => handleDelete(song.id!)}>
                     Delete
                   </Button>
                 </div>

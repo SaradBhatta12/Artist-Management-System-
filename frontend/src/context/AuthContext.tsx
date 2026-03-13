@@ -3,9 +3,13 @@ import axios from "axios";
 
 // Define the User interface based on the backend model
 interface User {
-  _id: string;
+  id: string;
   first_name: string;
   last_name: string;
+  artist: {
+    id: string;
+
+  }
   email: string;
   role: string;
 }

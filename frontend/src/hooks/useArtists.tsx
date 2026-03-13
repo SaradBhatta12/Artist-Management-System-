@@ -4,8 +4,11 @@ import axios from "axios";
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URI || "http://localhost:3000";
 
 export interface ArtistData {
-  _id?: string;
+  id?: string;
   name: string;
+  email?: string;
+  phone?: string;
+  password?: string;
   dob?: string;
   gender?: string;
   address?: string;

@@ -10,10 +10,35 @@ import { verifyJWT, authorizeRoles } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/create", verifyJWT, authorizeRoles("super_admin"), createMusic);
-router.get("/all", verifyJWT, authorizeRoles("super_admin"), getAllMusics);
-router.get("/:id", verifyJWT, authorizeRoles("super_admin"), getMusicById);
-router.put("/update/:id", verifyJWT, authorizeRoles("super_admin"), updateMusic);
-router.delete("/delete/:id", verifyJWT, authorizeRoles("super_admin"), deleteMusic);
+router.post(
+  "/create",
+  verifyJWT,
+  authorizeRoles("super_admin", "artist", "artist_manager"),
+  createMusic,
+);
+router.get(
+  "/all",
+  verifyJWT,
+  authorizeRoles("super_admin", "artist", "artist_manager"),
+  getAllMusics,
+);
+router.get(
+  "/:id",
+  verifyJWT,
+  authorizeRoles("super_admin", "artist", "artist_manager"),
+  getMusicById,
+);
+router.put(
+  "/update/:id",
+  verifyJWT,
+  authorizeRoles("super_admin", "artist", "artist_manager"),
+  updateMusic,
+);
+router.delete(
+  "/delete/:id",
+  verifyJWT,
+  authorizeRoles("super_admin", "artist", "artist_manager"),
+  deleteMusic,
+);
 
 export default router;

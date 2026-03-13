@@ -3,7 +3,8 @@ import db from "../config/db.js";
 
 export const verifyJWT = async (req, res, next) => {
   try {
-    const token = req.cookies?.token || req.header("Authorization")?.replace("Bearer ", "");
+    const token =
+      req.cookies?.token || req.header("Authorization")?.replace("Bearer ", "");
 
     if (!token) {
       return res.status(401).json({
@@ -12,9 +13,13 @@ export const verifyJWT = async (req, res, next) => {
       });
     }
 
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET || "your_jwt_secret");
+    const decodedToken = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your_jwt_secret",
+    );
 
-    const query = "SELECT id, first_name, last_name, email, phone, role, dob, gender, address, created_at, updated_at FROM users WHERE id = $1";
+    const query =
+      "SELECT id, first_name, last_name, email, phone, role, dob, gender, address, created_at, updated_at FROM users WHERE id = $1";
     const result = await db.query(query, [decodedToken?.id]);
     const user = result.rows[0];
 

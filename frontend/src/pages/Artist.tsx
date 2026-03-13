@@ -5,8 +5,10 @@ import Button from "../components/Button";
 import Modal from "../components/Modal";
 import { useArtists } from "../hooks/useArtists";
 import type { ArtistData } from "../hooks/useArtists";
+import { useAuth } from "../context/AuthContext";
 
 const Artist = () => {
+  const { user } = useAuth();
   const {
     artists,
     loading,
@@ -23,6 +25,9 @@ const Artist = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState<ArtistData>({
     name: "",
+    email: "",
+    phone: "",
+    password: "",
     dob: "",
     gender: "male",
     address: "",
@@ -39,6 +44,9 @@ const Artist = () => {
     setEditingArtist(null);
     setFormData({
       name: "",
+      email: "",
+      phone: "",
+      password: "",
       dob: "",
       gender: "male",
       address: "",
@@ -52,6 +60,9 @@ const Artist = () => {
     setEditingArtist(artist);
     setFormData({
       ...artist,
+      email: artist.email || "",
+      phone: artist.phone || "",
+      password: "", // Password shouldn't be populated on edit for security
       dob: artist.dob ? new Date(artist.dob).toISOString().split("T")[0] : "",
     });
     setIsModalOpen(true);
@@ -69,8 +80,8 @@ const Artist = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     let result;
-    if (editingArtist?._id) {
-      result = await updateArtistInfo(editingArtist._id, formData);
+    if (editingArtist?.id) {
+      result = await updateArtistInfo(editingArtist.id, formData);
     } else {
       result = await addArtist(formData);
     }
@@ -229,7 +240,7 @@ const Artist = () => {
         ) : (
           artists?.map((artist) => (
             <tr
-              key={artist._id}
+              key={artist.id}
               className='hover:bg-gray-50 transition border-b border-gray-100 last:border-0'
             >
               <td className='px-6 py-4 font-semibold text-purple-900'>
@@ -257,26 +268,32 @@ const Artist = () => {
                   <Button
                     variant='ghost'
                     size='sm'
-                    onClick={() => navigate(`/artist/${artist._id}`)}
+                    onClick={() => navigate(`/artist/${artist.id}`)}
                     className='text-purple-700 hover:text-purple-900 hover:bg-purple-50'
                   >
                     View Songs
                   </Button>
                   <div className='h-6 w-px bg-gray-200 self-center mx-1'></div>
-                  <Button
-                    variant='secondary'
-                    size='sm'
-                    onClick={() => handleEdit(artist)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant='danger'
-                    size='sm'
-                    onClick={() => handleDelete(artist._id!)}
-                  >
-                    Delete
-                  </Button>
+                  {
+                    user?.role === "super_admin" && (
+                      <>
+                        <Button
+                          variant='secondary'
+                          size='sm'
+                          onClick={() => handleEdit(artist)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant='danger'
+                          size='sm'
+                          onClick={() => handleDelete(artist.id!)}
+                        >
+                          Delete
+                        </Button>
+                      </>
+                    )
+                  }
                 </div>
               </td>
             </tr>
@@ -303,6 +320,52 @@ const Artist = () => {
               placeholder='Artist Name'
             />
           </div>
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+            <div className='space-y-1.5'>
+              <label className='text-sm font-semibold text-gray-700'>
+                Email
+              </label>
+              <input
+                name='email'
+                type='email'
+                value={formData.email}
+                onChange={handleInputChange}
+                required={!editingArtist}
+                className='w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition'
+                placeholder='artist@example.com'
+              />
+            </div>
+            <div className='space-y-1.5'>
+              <label className='text-sm font-semibold text-gray-700'>
+                Phone
+              </label>
+              <input
+                name='phone'
+                type='tel'
+                value={formData.phone}
+                onChange={handleInputChange}
+                required={!editingArtist}
+                className='w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition'
+                placeholder='+1234567890'
+              />
+            </div>
+          </div>
+          {!editingArtist && (
+            <div className='space-y-1.5'>
+              <label className='text-sm font-semibold text-gray-700'>
+                Password
+              </label>
+              <input
+                name='password'
+                type='password'
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+                className='w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition'
+                placeholder='Strong password'
+              />
+            </div>
+          )}
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <div className='space-y-1.5'>
               <label className='text-sm font-semibold text-gray-700'>

@@ -12,6 +12,7 @@ import Artist from "./pages/Artist";
 import Albums from "./pages/Albums";
 import Users from "./pages/Users";
 import AdminLayout from "./layout/AdminLayout";
+import Dashboard from "./pages/Dashboard";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -23,7 +24,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (user?.role !== "super_admin") {
+  if (user?.role !== "super_admin" && user?.role !== "artist_manager" && user?.role !== "artist") {
     return <Navigate to='/login' replace />;
   }
 
@@ -40,7 +41,7 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (user?.role === "super_admin") {
+  if (user?.role === "super_admin" || user?.role === "artist_manager" || user?.role === "music_manager") {
     return <Navigate to='/artist' replace />;
   }
 
@@ -73,6 +74,7 @@ const App = () => {
           <Route path='/artist' element={<Artist />} />
           <Route path='/artist/:id' element={<Albums />} />
           <Route path='/users' element={<Users />} />
+          <Route path='/dashboard' element={<Dashboard />} />
         </Route>
       </Routes>
     </Router>

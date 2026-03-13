@@ -88,7 +88,12 @@ const Users = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // for date, convert to ISO string
+    const newValue =
+      name === "dob" && value ? new Date(value).toISOString() : value;
+
+    setFormData((prev) => ({ ...prev, [name]: newValue }));
   };
 
   return (
@@ -271,7 +276,8 @@ const Users = () => {
             <label className='text-sm font-semibold text-gray-700'>DOB</label>
             <input
               type='date'
-              value={formData?.dob}
+              name='dob' // ← important
+              value={formData?.dob ? formData.dob.split("T")[0] : ""}
               onChange={handleInputChange}
               required
               className='w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition'

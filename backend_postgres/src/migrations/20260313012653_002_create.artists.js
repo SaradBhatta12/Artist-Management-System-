@@ -12,9 +12,11 @@ exports.up = function (knex) {
     table.enum("gender", ["male", "female", "other"]);
     table.text("address");
     table.integer("first_release_year");
+    table.string("user_id").notNullable().references("id").inTable("users");
     table.integer("no_of_albums_released").defaultTo(0);
     table.timestamp("created_at").defaultTo(knex.fn.now());
     table.timestamp("updated_at").defaultTo(knex.fn.now());
+
   })
 };
 

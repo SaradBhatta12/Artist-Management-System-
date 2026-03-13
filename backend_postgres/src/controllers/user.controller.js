@@ -1,75 +1,134 @@
 import bcrypt from "bcrypt";
 import generateToken from "../utils/jwt-set.js";
-import db from "../config/db.js"
+import db from "../config/db.js";
 export const registerUser = async (req, res, next) => {
   try {
-    const { first_name, last_name, email, password, phone, dob, gender, address } = req.body;
+    const {
+      first_name,
+      last_name,
+      email,
+      password,
+      phone,
+      dob,
+      gender,
+      address,
+    } = req.body;
 
     if (!first_name || !last_name || !email || !password) {
-      return res.status(400).json({ success: false, message: "Please enter all required fields" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Please enter all required fields" });
     }
 
     const userExistsQuery = "SELECT * FROM users WHERE email = $1";
     const userExistsResult = await db.query(userExistsQuery, [email]);
     if (userExistsResult.rows.length > 0) {
-      return res.status(400).json({ success: false, message: "User already exists" });
+      return res
+        .status(400)
+        .json({ success: false, message: "User already exists" });
     }
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    const query = "INSERT INTO users (first_name, last_name, email, password, phone, dob, gender, address) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *";
+    const query =
+      "INSERT INTO users (first_name, last_name, email, password, phone, dob, gender, address) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *";
 
-    const result = await db.query(query, [first_name, last_name, email, hashedPassword, phone, dob, gender, address]);
+    const result = await db.query(query, [
+      first_name,
+      last_name,
+      email,
+      hashedPassword,
+      phone,
+      dob,
+      gender,
+      address,
+    ]);
     const user = result.rows[0];
 
     if (user) {
-      res
-        .status(201).json({
-          success: true,
-          user: user,
-        });
+      res.status(201).json({
+        success: true,
+        user: user,
+      });
     } else {
-      return res.status(400).json({ success: false, message: "Invalid user data" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid user data" });
     }
   } catch (error) {
-    return res.status(500).json({ success: false, message: error?.message || "Internal Server Error" });
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Internal Server Error",
+    });
   }
 };
 
-// admin able to create new user with any roles 
+// admin able to create new user with any roles
 export const createUser = async (req, res, next) => {
   try {
-    const { first_name, last_name, email, phone, role, dob, gender, address } = req.body;
+    const {
+      first_name,
+      last_name,
+      email,
+      password,
+      phone,
+      role,
+      dob,
+      gender,
+      address,
+    } = req.body;
 
     if (!first_name || !last_name || !role || !email) {
-      return res.status(400).json({ success: false, message: "Please enter all required fields" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Please enter all required fields" });
     }
 
     const userExistsQuery = "SELECT * FROM users WHERE email = $1";
     const userExistsResult = await db.query(userExistsQuery, [email]);
     if (userExistsResult.rows.length > 0) {
-      return res.status(400).json({ success: false, message: "User already exists" });
+      return res
+        .status(400)
+        .json({ success: false, message: "User already exists" });
     }
+    const hashedPassword = password
+      ? await bcrypt.hash(password, await bcrypt.genSalt(10))
+      : null;
 
-    const query = "INSERT INTO users (first_name, last_name, email, phone, role, dob, gender, address) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *";
+    const query =
+      "INSERT INTO users (first_name, last_name, email, password, phone, role, dob, gender, address) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9   ) RETURNING *";
 
-    const result = await db.query(query, [first_name, last_name, email, phone, role, dob, gender, address]);
+    const result = await db.query(query, [
+      first_name,
+      last_name,
+      email,
+      hashedPassword,
+      phone,
+      role,
+      dob,
+      gender,
+      address,
+    ]);
     const user = result.rows[0];
 
     if (user) {
-      res
-        .status(201).json({
-          success: true,
-          user: user,
-        });
+      res.status(201).json({
+        success: true,
+        user: user,
+      });
     } else {
-      return res.status(400).json({ success: false, message: "Invalid user data" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid user data" });
     }
   } catch (error) {
-    return res.status(500).json({ success: false, message: error?.message || "Internal Server Error" });
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Internal Server Error",
+    });
   }
-}
+};
 
 export const loginUser = async (req, res, next) => {
   try {
@@ -80,7 +139,9 @@ export const loginUser = async (req, res, next) => {
     const user = result.rows[0];
 
     if (!user) {
-      return res.status(400).json({ success: false, message: "User not found. register first." });
+      return res
+        .status(400)
+        .json({ success: false, message: "User not found. register first." });
     }
 
     if (user && (await bcrypt.compare(password, user.password))) {
@@ -101,10 +162,15 @@ export const loginUser = async (req, res, next) => {
           token: token,
         });
     } else {
-      return res.status(401).json({ success: false, message: "Invalid email or password" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
     }
   } catch (error) {
-    return res.status(500).json({ success: false, message: error?.message || "Internal Server Error" });
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Internal Server Error",
+    });
   }
 };
 
@@ -124,26 +190,49 @@ export const logoutUser = async (req, res, next) => {
       message: "Logged Out",
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error?.message || "Internal Server Error" });
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Internal Server Error",
+    });
   }
 };
 
 export const getUserProfile = async (req, res, next) => {
   try {
-    const query = "SELECT id, first_name, last_name, email, phone, role, dob, gender, address, created_at, updated_at FROM users WHERE id = $1";
+    const query =
+      "SELECT id, first_name, last_name, email, phone, role, dob, gender, address, created_at, updated_at FROM users WHERE id = $1";
     const result = await db.query(query, [req.user.id]);
     const user = result.rows[0];
 
-    if (user) {
+
+    if (user && user.role !== "artist") {
       return res.status(200).json({
         success: true,
         user,
       });
-    } else {
-      return res.status(404).json({ success: false, message: "User not found" });
+    } else if (user && user.role === "artist") {
+      const artistQuery = "SELECT * FROM artists WHERE user_id = $1";
+      const artistResult = await db.query(artistQuery, [req.user.id]);
+      const artist = artistResult.rows[0];
+
+      return res.status(200).json({
+        success: true,
+        user: {
+          ...user,
+          artist,
+        },
+      });
+    }
+    else {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
   } catch (error) {
-    return res.status(500).json({ success: false, message: error?.message || "Internal Server Error" });
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Internal Server Error",
+    });
   }
 };
 
@@ -154,14 +243,17 @@ export const getAllUsers = async (req, res, next) => {
     const search = req.query.search || "";
     const offset = (page - 1) * limit;
 
-    let usersQuery = "SELECT id, first_name, last_name, email, phone, role, dob, gender, address, created_at, updated_at FROM users";
+    let usersQuery =
+      "SELECT id, first_name, last_name, email, phone, role, dob, gender, address, created_at, updated_at FROM users";
     let countQuery = "SELECT COUNT(*) FROM users";
     let params = [];
 
     if (search) {
       const searchPattern = `%${search}%`;
-      usersQuery += " WHERE first_name ILIKE $1 OR last_name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1";
-      countQuery += " WHERE first_name ILIKE $1 OR last_name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1";
+      usersQuery +=
+        " WHERE first_name ILIKE $1 OR last_name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1";
+      countQuery +=
+        " WHERE first_name ILIKE $1 OR last_name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1";
       params.push(searchPattern);
     }
 
@@ -181,19 +273,25 @@ export const getAllUsers = async (req, res, next) => {
       limit,
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error?.message || "Internal Server Error" });
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Internal Server Error",
+    });
   }
 };
 
 export const updateUser = async (req, res, next) => {
   try {
-    const { first_name, last_name, email, phone, role, dob, gender, address } = req.body;
-    
+    const { first_name, last_name, email, phone, role, dob, gender, address } =
+      req.body;
+
     // Check if user exists
     const checkQuery = "SELECT * FROM users WHERE id = $1";
     const checkResult = await db.query(checkQuery, [req.params.id]);
     if (checkResult.rows.length === 0) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     const updateQuery = `
@@ -211,7 +309,7 @@ export const updateUser = async (req, res, next) => {
       dob || checkResult.rows[0].dob,
       gender || checkResult.rows[0].gender,
       address || checkResult.rows[0].address,
-      req.params.id
+      req.params.id,
     ]);
 
     return res.status(200).json({
@@ -219,7 +317,10 @@ export const updateUser = async (req, res, next) => {
       user: result.rows[0],
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error?.message || "Internal Server Error" });
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Internal Server Error",
+    });
   }
 };
 
@@ -228,7 +329,9 @@ export const deleteUser = async (req, res, next) => {
     const checkQuery = "SELECT * FROM users WHERE id = $1";
     const checkResult = await db.query(checkQuery, [req.params.id]);
     if (checkResult.rows.length === 0) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     const deleteQuery = "DELETE FROM users WHERE id = $1";
@@ -239,7 +342,9 @@ export const deleteUser = async (req, res, next) => {
       message: "User deleted successfully",
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error?.message || "Internal Server Error" });
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Internal Server Error",
+    });
   }
 };
-
