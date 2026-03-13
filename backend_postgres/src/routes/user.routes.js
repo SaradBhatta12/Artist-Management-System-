@@ -14,8 +14,8 @@ import loginLimiter from "../middlewares/loginLimiter.middleware.js";
 
 const router = express.Router();
 
-router.post("/register", registerUser);
-router.post("/login", loginUser);
+router.post("/register", loginLimiter, registerUser);
+router.post("/login", loginLimiter, loginUser);
 router.post("/logout", verifyJWT, logoutUser);
 router.get("/profile", verifyJWT, getUserProfile);
 router.post("/add-user", verifyJWT, authorizeRoles("super_admin"), createUser);
