@@ -1,10 +1,11 @@
 import { useState, useCallback } from "react";
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URI || "http://localhost:3000";
+const API_BASE_URL =
+  import.meta.env.VITE_BACKEND_URI || "http://localhost:3000";
 
 export interface UserData {
-  _id?: string;
+  id?: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -44,9 +45,13 @@ export const useUsers = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/user/add-user`, userData, {
-        withCredentials: true,
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/api/user/add-user`,
+        userData,
+        {
+          withCredentials: true,
+        },
+      );
       if (response.data.success) {
         return { success: true, user: response.data.user };
       }
@@ -62,9 +67,13 @@ export const useUsers = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.put(`${API_BASE_URL}/api/user/update-user/${id}`, userData, {
-        withCredentials: true,
-      });
+      const response = await axios.put(
+        `${API_BASE_URL}/api/user/update-user/${id}`,
+        userData,
+        {
+          withCredentials: true,
+        },
+      );
       if (response.data.success) {
         return { success: true, user: response.data.user };
       }
@@ -80,9 +89,12 @@ export const useUsers = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.delete(`${API_BASE_URL}/api/user/delete-user/${id}`, {
-        withCredentials: true,
-      });
+      const response = await axios.delete(
+        `${API_BASE_URL}/api/user/delete-user/${id}`,
+        {
+          withCredentials: true,
+        },
+      );
       if (response.data.success) {
         return { success: true };
       }

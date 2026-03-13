@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
-import { Music } from "../models/music.models.js";
-import { Artist } from "../models/artist.models.js";
 import db from "../config/db.js";
+const commonQuery = `SELECT * FROM artists WHERE id = $1`;
+const musicQuery = `SELECT * FROM musics WHERE id = $1`;
 
 export const createMusic = async (req, res, next) => {
   try {
@@ -13,8 +13,7 @@ export const createMusic = async (req, res, next) => {
         .json({ success: false, message: "Artist ID and Title are required" });
     }
 
-    const query = `SELECT * FROM artists WHERE id = $1`;
-    const artistExists = await db.query(query, [artist_id]);
+    const artistExists = await db.query(commonQuery, [artist_id]);
 
     if (!artistExists) {
       return res
@@ -22,9 +21,8 @@ export const createMusic = async (req, res, next) => {
         .json({ success: false, message: "Artist not found" });
     }
     //every time when you create music it automatically increase the number of albums released
-    artistExists.no_of_albums_released += 1;
-    await artistExists.save();
-
+    const updateMusicQuery = `UPDATE artists SET no_of_albums_released = no_of_albums_released + 1 WHERE id = $1 RETURNING *`;
+    await db.query(updateMusicQuery, [artist_id]);
     const musicQuery = `INSERT INTO musics (artist_id, title, album_name, genre) VALUES ($1, $2, $3, $4) RETURNING *`;
     const music = await db.query(musicQuery, [
       artist_id,
@@ -79,11 +77,9 @@ export const getAllMusics = async (req, res, next) => {
 
 export const getMusicById = async (req, res, next) => {
   try {
-    const music = await Music.findById(req.params.id).populate(
-      "artist_id",
-      "name",
-    );
-    if (!music) {
+    const { id } = req.params;
+    const music = await db.query(musicQuery, [id]);
+    if (!music.rows.length) {
       return res
         .status(404)
         .json({ success: false, message: "Music not found" });
@@ -103,21 +99,20 @@ export const getMusicById = async (req, res, next) => {
 
 export const updateMusic = async (req, res, next) => {
   try {
-    const music = await Music.findById(req.params.id);
-    if (!music) {
+    const music = await db.query(musicQuery, [req.params.id]);
+    if (!music.rows.length) {
       return res
         .status(404)
         .json({ success: false, message: "Music not found" });
     }
 
-    const updatedMusic = await Music.findByIdAndUpdate(
+    const updateQuery = `UPDATE musics SET title = $1, album_name = $2, genre = $3 WHERE id = $4 RETURNING *`;
+    const updatedMusic = await db.query(updateQuery, [
+      req.body.title,
+      req.body.album_name,
+      req.body.genre,
       req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true,
-      },
-    );
+    ]);
 
     return res.status(200).json({
       success: true,
@@ -133,17 +128,22 @@ export const updateMusic = async (req, res, next) => {
 
 export const deleteMusic = async (req, res, next) => {
   try {
-    const music = await Music.findById(req.params.id);
-    if (!music) {
+    const { id } = req.params;
+    const music = await db.query(musicQuery, [id]);
+    if (!music.rows.length) {
       return res
         .status(404)
         .json({ success: false, message: "Music not found" });
     }
 
-    await Music.findByIdAndDelete(req.params.id);
-    const artist = await Artist.findById(music.artist_id);
-    artist.no_of_albums_released -= 1;
-    await artist.save();
+    const deleteQuery = `DELETE FROM musics WHERE id = $1`;
+    await db.query(deleteQuery, [id]);
+    const artist = await db.query(commonQuery, [id]);
+    const updateQuery = `UPDATE artists SET no_of_albums_released = $1 WHERE id = $2`;
+    await db.query(updateQuery, [
+      artist.rows[0].no_of_albums_released - 1,
+      artist.rows[0].id,
+    ]);
 
     return res.status(200).json({
       success: true,
