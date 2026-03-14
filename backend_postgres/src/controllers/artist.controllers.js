@@ -1,91 +1,176 @@
 import db from "../config/db.js";
 import bcrypt from "bcrypt";
-export const createArtist = async (req, res, data) => {
+const validateArtistData = (data) => {
+  const { name, email, phone, dob, gender, password } = data;
+  if (!name || !dob || !gender || !email || !phone || !password) {
+    return "Name, DOB, gender, email, phone, and password are required";
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return "Invalid email format";
+  }
+  const phoneRegex = /^\+?[0-9\s\-()]{7,20}$/;
+  if (!phoneRegex.test(phone)) {
+    return "Invalid phone number format";
+  }
+  return null;
+};
+
+export const createArtistInternal = async (data) => {
+  const validationError = validateArtistData(data);
+  if (validationError) {
+    const error = new Error(validationError);
+    error.status = 400;
+    throw error;
+  }
+
+  const {
+    name,
+    email,
+    phone,
+    dob,
+    gender,
+    address,
+    first_release_year,
+    no_of_albums_released,
+    password,
+  } = data;
+
+  const first_name = name.split(" ")[0] || "";
+  const last_name = name.split(" ").slice(1).join(" ") || "";
+
+  const userExistsQuery = "SELECT * FROM users WHERE email = $1";
+  const userExistsResult = await db.query(userExistsQuery, [email]);
+  if (userExistsResult.rows.length > 0) {
+    const error = new Error("User with this email already exists");
+    error.status = 400;
+    throw error;
+  }
+
+  const artistExist = await db.query(
+    `SELECT * FROM artists WHERE name = $1 AND dob = $2`,
+    [name, dob],
+  );
+
+  if (artistExist.rows.length) {
+    const error = new Error("Artist with this name and DOB already exists");
+    error.status = 400;
+    throw error;
+  }
+
+  // Hash password
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+  const userCreateQuery =
+    "INSERT INTO users (first_name, last_name, email, password, phone, dob, role, gender, address) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id";
+
+  const userResult = await db.query(userCreateQuery, [
+    first_name,
+    last_name,
+    email,
+    hashedPassword,
+    phone,
+    dob,
+    "artist",
+    gender,
+    address,
+  ]);
+  console.log(userResult)
+
+  const userId = userResult.rows[0].id;
+
+  const artistCreateQuery = `INSERT INTO artists (name, dob, gender, address, first_release_year, no_of_albums_released, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`;
+  const artistResult = await db.query(artistCreateQuery, [
+    name,
+    dob,
+    gender,
+    address,
+    first_release_year,
+    no_of_albums_released,
+    userId,
+  ]);
+
+  return {
+    success: true,
+    artist: artistResult.rows[0],
+    userId: userId,
+  };
+};
+
+export const createArtist = async (req, res, next) => {
   try {
-    const {
-      name,
-      email,
-      phone,
-      dob,
-      gender,
-      address,
-      first_release_year,
-      no_of_albums_released,
-      password,
-    } = req.body;
+    const result = await createArtistInternal(req.body);
+    return res.status(201).json(result);
+  } catch (error) {
+    console.error(error);
+    return res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
 
-    if (!name || !dob || !gender || !email || !phone || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Name, DOB, and gender are required",
-      });
-    }
-    const first_name = name.split(" ")[0] || "";
-    const last_name = name.split(" ")[1] || "";
-    const userExistsQuery = "SELECT * FROM users WHERE email = $1";
-    const userExistsResult = await db.query(userExistsQuery, [email]);
-    if (userExistsResult.rows.length > 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User already exists" });
+export const multipleCreateArtist = async (req, res, next) => {
+  try {
+    const artists = req.body;
+
+    if (!Array.isArray(artists)) {
+      return res.status(400).json({ success: false, message: "Expected an array of artists" });
     }
 
-    const artistExist = await db.query(
-      `SELECT * FROM artists WHERE name = $1 AND dob = $2`,
-      [name, dob],
-    );
+    const results = {
+      success: [],
+      failed: []
+    };
 
-    if (artistExist.rows.length) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Artist already exists" });
+    for (const artist of artists) {
+      try {
+        const result = await createArtistInternal(artist);
+        console.log(result)
+        results.success.push(result.artist);
+      } catch (error) {
+        results.failed.push({
+          artist: artist.name || artist.email || "Unknown",
+          message: error.message
+        });
+      }
     }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    const userCreateQuery =
-      "INSERT INTO users (first_name, last_name, email, password, phone, dob, role, gender, address) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id";
-
-    const userResult = await db.query(userCreateQuery, [
-      first_name,
-      last_name,
-      email,
-      hashedPassword,
-      phone,
-      dob,
-      "artist",
-      gender,
-      address,
-    ]);
-
-    const userId = userResult.rows[0].id;
-
-    const artistCreateQuery = `INSERT INTO artists (name, dob, gender, address, first_release_year, no_of_albums_released, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`;
-    const artistResult = await db.query(artistCreateQuery, [
-      name,
-      dob,
-      gender,
-      address,
-      first_release_year,
-      no_of_albums_released,
-      userId,
-    ]);
 
     return res.status(201).json({
       success: true,
-      artist: artistResult.rows[0],
-      userId: userId,
+      message: `Processed ${artists.length} artists. ${results.success.length} succeeded, ${results.failed.length} failed.`,
+      artists: results.success,
+      errors: results.failed
     });
   } catch (error) {
-    console.log(error);
-
     return res.status(500).json({
       success: false,
       message: error?.message || "Internal Server Error",
     });
   }
 };
+
+
+export const exportallArtestsToExcel = async (req, res, next) => {
+  try {
+
+    const allArtistsQuery = `
+      SELECT artists.*, users.first_name, users.last_name, users.email, users.phone, users.role
+      FROM artists
+      INNER JOIN users ON artists.user_id = users.id
+    `;
+    const artists = await db.query(allArtistsQuery);
+    return res.status(200).json({
+      success: true,
+      artists: artists.rows,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Internal Server Error",
+    });
+  }
+}
 
 export const getAllArtists = async (req, res, next) => {
   try {

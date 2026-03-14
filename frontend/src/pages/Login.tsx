@@ -1,7 +1,7 @@
 import { useState } from "react";
 import useLogin from "../hooks/useLogin";
 import useRegister from "../hooks/useRegister";
-
+import toast from "react-hot-toast";
 const Login = () => {
   const [activeTab, setActiveTab] = useState("login");
   const { login, error: loginError, loading: loginLoading } = useLogin();
@@ -35,12 +35,16 @@ const Login = () => {
   const handleLoginSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await login(loginData);
+    if (loginError) {
+      toast.error(loginError || "Login failed")
+    }
   };
 
   const handleRegisterSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const result = await register(registerData);
     if (result) {
+      toast.success("Registration successful! You can now login.");
       // Clear form on success
       setRegisterData({
         first_name: "",
@@ -54,6 +58,8 @@ const Login = () => {
       });
       // Optionally switch to login tab after brief delay
       setTimeout(() => setActiveTab("login"), 3000);
+    } else {
+      toast.error(registerError || "Registration failed")
     }
   };
 
@@ -92,12 +98,6 @@ const Login = () => {
         {/* LOGIN FORM */}
         {activeTab === "login" && (
           <form onSubmit={handleLoginSubmit} className="space-y-4">
-
-            {loginError && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded text-sm">
-                {loginError}
-              </div>
-            )}
 
             <div className="relative">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 m-2">Email</label>
@@ -148,11 +148,6 @@ const Login = () => {
         {activeTab === "register" && (
           <form onSubmit={handleRegisterSubmit} className="space-y-3">
 
-            {registerError && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded text-sm">
-                {registerError}
-              </div>
-            )}
 
             {registerSuccess && (
               <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-2 rounded text-sm">

@@ -95,6 +95,44 @@ export const useArtists = () => {
     }
   };
 
+  const importArtistsFromExcel = async (artists: ArtistData[]) => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log(artists)
+      const response = await axios.post(`${API_BASE_URL}/api/artist/import-all-artists-from-excel`, artists, {
+        withCredentials: true,
+      });
+      if (response.data.success) {
+        return { success: true, artists: response.data.artists };
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to import artists");
+      return { success: false, message: err.response?.data?.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAllArtistsForExport = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/artist/export-all-artists-to-excel`, {
+        withCredentials: true,
+      });
+      console.log(response)
+      if (response.data.success) {
+        return { success: true, artists: response.data.artists };
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to fetch artists for export");
+      return { success: false, message: err.response?.data?.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     artists,
     loading,
@@ -104,5 +142,7 @@ export const useArtists = () => {
     addArtist,
     updateArtistInfo,
     removeArtist,
+    importArtistsFromExcel,
+    fetchAllArtistsForExport,
   };
 };

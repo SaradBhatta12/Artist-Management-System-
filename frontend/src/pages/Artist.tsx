@@ -3,10 +3,12 @@ import { Navigate, useNavigate } from "react-router-dom";
 import Table from "../components/Table";
 import Button from "../components/Button";
 import Modal from "../components/Modal";
-import { useArtists } from "../hooks/useArtists";
+import { useArtists, } from "../hooks/useArtists";
 import type { ArtistData } from "../hooks/useArtists";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import * as XLSX from "xlsx";
+import toast from "react-hot-toast";
 
 const Artist = () => {
   const { user } = useAuth();
@@ -25,6 +27,8 @@ const Artist = () => {
     addArtist,
     updateArtistInfo,
     removeArtist,
+    importArtistsFromExcel,
+    fetchAllArtistsForExport,
     error,
   } = useArtists();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -92,11 +96,18 @@ const Artist = () => {
       result = await updateArtistInfo(editingArtist.id, formData);
     } else {
       result = await addArtist(formData);
+      if (result?.success) {
+        toast.success("Artist added successfully!");
+      }
+      if (error) {
+        toast.error(error);
+      }
     }
 
     if (result?.success) {
       setIsModalOpen(false);
       fetchArtists(currentPage, searchQuery);
+      toast.success("Artist updated successfully!");
     }
   };
 
@@ -113,12 +124,41 @@ const Artist = () => {
     }));
   };
 
-  const handleExport = () => {
-    alert("Exporting artists to CSV...");
+  const validateImportData = (data: any[]) => {
+    const errors: string[] = [];
+    data.forEach((item, index) => {
+      if (!item.name || !item.email || !item.password || !item.dob || !item.gender || !item.phone) {
+        errors.push(`Row ${index + 1}: Missing required fields (Name, Email, Password, DOB, Gender, Phone)`);
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (item.email && !emailRegex.test(item.email)) {
+        errors.push(`Row ${index + 1}: Invalid email format`);
+      }
+    });
+    return errors;
   };
 
-  const handleImport = () => {
-    alert("Triggering CSV import...");
+  const handleExport = async () => {
+    const result = await fetchAllArtistsForExport();
+    if (result?.success && result.artists) {
+      const exportData = result.artists.map((artist: any) => ({
+        Name: artist.name,
+        Email: artist.email,
+        Phone: artist.phone,
+        DOB: artist.dob ? new Date(artist.dob).toISOString().split("T")[0] : "",
+        Gender: artist.gender,
+        Address: artist.address,
+        First_Released: artist.first_release_year,
+        Albums: artist.no_of_albums_released
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Artists");
+      XLSX.writeFile(workbook, "artists_export.xlsx");
+    } else {
+      alert("Failed to export artists: " + (result?.message || "Unknown error"));
+    }
   };
 
   return (
@@ -143,9 +183,67 @@ const Artist = () => {
               setCurrentPage(1);
             }}
           />
+          <input type="file" accept=".csv, .xlsx, .xls" id="csv-import" className="hidden" onChange={(e) => {
+            e.preventDefault();
+
+            const file = e.target.files?.[0];
+            if (file) {
+              const reader = new FileReader();
+
+              reader.onload = async (event) => {
+                try {
+                  const data = new Uint8Array(event.target?.result as ArrayBuffer);
+                  const workbook = XLSX.read(data, { type: "array" });
+                  const sheetName = workbook.SheetNames[0];
+                  const sheet = workbook.Sheets[sheetName];
+                  const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+                  const acceptData = jsonData.map((item: any) => {
+                    return {
+                      name: item.Name || item.name,
+                      email: item.Email || item.email,
+                      phone: item.Phone || item.phone,
+                      password: item.Password || item.password || "Password123", // Default if missing
+                      dob: item.DOB || item.dob,
+                      gender: item.Gender || item.gender,
+                      address: item.Address || item.address,
+                      first_release_year: Number(item.First_Released || item.first_release_year || new Date().getFullYear()),
+                      no_of_albums_released: Number(item.Albums || item.no_of_albums_released || 0),
+                    };
+                  });
+
+                  if (acceptData.length === 0) {
+                    alert("No data found in the file");
+                    return;
+                  }
+
+                  const validationErrors = validateImportData(acceptData);
+                  if (validationErrors.length > 0) {
+                    alert("Validation errors found:\n" + validationErrors.join("\n").substring(0, 500) + (validationErrors.length > 5 ? "\n..." : ""));
+                    return;
+                  }
+
+                  const result = await importArtistsFromExcel(acceptData);
+                  if (result?.success) {
+                    alert(result.message || "Artists imported successfully");
+                    fetchArtists(currentPage, searchQuery);
+                  } else {
+                    alert("Import failed: " + (result?.message || "Unknown error"));
+                  }
+                } catch (err) {
+                  console.error("Import error:", err);
+                  alert("Error processing file. Please ensure it is a valid CSV or Excel file.");
+                }
+              };
+
+              reader.readAsArrayBuffer(file);
+            }
+          }} />
+
+
           <Button
             variant='secondary'
-            onClick={handleImport}
+            onClick={() => { document.getElementById("csv-import")?.click() }}
             className='flex gap-2 flex-1 sm:flex-none'
           >
             <svg
@@ -158,11 +256,13 @@ const Artist = () => {
                 strokeLinecap='round'
                 strokeLinejoin='round'
                 strokeWidth={2}
-                d='M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12'
+                d='M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4'
               />
             </svg>
             Import CSV
           </Button>
+
+
           <Button
             variant='secondary'
             onClick={handleExport}
@@ -205,14 +305,6 @@ const Artist = () => {
         </div>
       </div>
 
-      {error && (
-        <div
-          className='bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg relative'
-          role='alert'
-        >
-          <span className='block sm:inline'>{error}</span>
-        </div>
-      )}
 
       <Table
         headers={[
