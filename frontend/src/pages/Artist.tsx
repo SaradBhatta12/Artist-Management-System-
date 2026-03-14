@@ -1,14 +1,22 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import Table from "../components/Table";
 import Button from "../components/Button";
 import Modal from "../components/Modal";
 import { useArtists } from "../hooks/useArtists";
 import type { ArtistData } from "../hooks/useArtists";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const Artist = () => {
   const { user } = useAuth();
+  const location = useLocation();
+  const pathname = location?.pathname;
+
+  if (user?.role === "artist" && pathname === "/artist") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   const {
     artists,
     loading,

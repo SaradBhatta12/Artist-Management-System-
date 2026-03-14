@@ -41,8 +41,8 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (user?.role === "super_admin" || user?.role === "artist_manager" || user?.role === "music_manager") {
-    return <Navigate to='/artist' replace />;
+  if (user?.role === "super_admin" || user?.role === "artist_manager" || user?.role === "artist") {
+    return <Navigate to='/dashboard' replace />;
   }
 
   return <>{children}</>;

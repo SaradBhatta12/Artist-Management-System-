@@ -4,8 +4,18 @@ import Button from "../components/Button";
 import Modal from "../components/Modal";
 import { useUsers } from "../hooks/useUsers";
 import type { UserData } from "../hooks/useUsers";
+import { useAuth } from "../context/AuthContext";
+import { Navigate, useLocation } from "react-router-dom";
+
 
 const Users = () => {
+  const { user } = useAuth();
+  const location = useLocation();
+  const pathname = location?.pathname;
+
+  if ((user?.role === "artist_manager" || user?.role === "artist") && pathname === "/users") {
+    return <Navigate to="/dashboard" replace />;
+  }
   const {
     users,
     loading,
@@ -28,6 +38,7 @@ const Users = () => {
     gender: "male",
     role: "artist",
     address: "",
+    password: "",
     dob: "",
   });
 
@@ -45,6 +56,7 @@ const Users = () => {
       gender: "male",
       role: "artist",
       address: "",
+      password: "",
       dob: "",
     });
     setIsModalOpen(true);
@@ -54,6 +66,7 @@ const Users = () => {
     setEditingUser(user);
     setFormData({
       ...user,
+      password: "",
     });
     setIsModalOpen(true);
   };
@@ -182,13 +195,12 @@ const Users = () => {
               <td className='px-6 py-4 font-medium'>{user.email}</td>
               <td className='px-6 py-4'>
                 <span
-                  className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                    user.role === "super_admin"
-                      ? "bg-purple-100 text-purple-700"
-                      : user.role === "artist_manager"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-emerald-100 text-emerald-700"
-                  }`}
+                  className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${user.role === "super_admin"
+                    ? "bg-purple-100 text-purple-700"
+                    : user.role === "artist_manager"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-emerald-100 text-emerald-700"
+                    }`}
                 >
                   {user.role?.replace("_", " ") || "user"}
                 </span>
@@ -271,6 +283,23 @@ const Users = () => {
               placeholder='john@example.com'
             />
           </div>
+
+          {!editingUser && (
+            <div className='space-y-1.5'>
+              <label className='text-sm font-semibold text-gray-700'>
+                Password
+              </label>
+              <input
+                name='password'
+                type='password'
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+                className='w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition'
+                placeholder='••••••••'
+              />
+            </div>
+          )}
 
           <div className='space-y-1.5'>
             <label className='text-sm font-semibold text-gray-700'>DOB</label>

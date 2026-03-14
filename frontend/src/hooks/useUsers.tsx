@@ -14,6 +14,7 @@ export interface UserData {
   gender?: string;
   dob?: string;
   address?: string;
+  password?: string;
 }
 
 export const useUsers = () => {

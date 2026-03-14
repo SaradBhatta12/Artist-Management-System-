@@ -82,14 +82,12 @@ const Albums = () => {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 rounded-xl shadow-sm gap-4 border border-gray-100">
         <div className="flex items-center gap-4">
-          <Button variant="secondary" size="sm" onClick={() => navigate("/artist")} className="rounded-full w-8 h-8 p-0">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
+          <Button variant="secondary" size="sm" onClick={() => navigate("/artist")} className="rounded-full w-20 h-10 p-0">
+            Back
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{artistName} - Songs & Albums</h1>
-            <p className="text-gray-500 text-sm">Listing all songs for this artist (ID: {id})</p>
+            <p className="text-gray-500 text-sm">Manage all albums for this artist</p>
           </div>
         </div>
         <Button onClick={handleCreate} className="flex gap-2 w-full sm:w-auto">

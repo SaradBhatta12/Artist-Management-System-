@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const AdminLayout = () => {
@@ -32,25 +32,31 @@ const AdminLayout = () => {
     <div className="p-6">
       <div className="tab-area mb-4 flex justify-between items-center">
         <div className="flex gap-2 bg-gray-100 p-1 rounded-md w-fit">
-          <NavLink
-            to="/artist"
-            className={({ isActive }) =>
-              `${base} ${isActive ? active : inactive}`
-            }
+          <button
+            onClick={() => navigate("/dashboard")}
+            className={`${base} ${location.pathname === "/dashboard" ? active : inactive
+              }`}
+          >
+            Dashboard
+          </button>
+          <button
+            disabled={user?.role === "artist"}
+            onClick={() => navigate("/artist")}
+            className={`${base} ${location.pathname === "/artist" ? active : inactive
+              }`}
           >
             Artist
-          </NavLink>
+          </button>
 
-          <NavLink
-            to="/users"
-            className={({ isActive }) =>
-              `${base} ${isActive ? active : inactive}`
-            }
+          <button
+            disabled={user?.role === "artist" || user?.role === "artist_manager"}
+            onClick={() => navigate("/users")}
+            className={`${base} ${location.pathname === "/users" ? active : inactive
+              }`}
           >
             Users
-          </NavLink>
+          </button>
         </div>
-
         <div className="relative" ref={popoverRef}>
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
