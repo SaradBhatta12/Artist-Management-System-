@@ -3,20 +3,18 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-
-  return knex.schema.createTable("users", table => {
+  return knex.schema.createTable("artists", table => {
     table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
-    table.string("first_name").notNullable();
-    table.string("last_name").notNullable();
-    table.string("email").notNullable().unique();
-    table.string("password").notNullable();
-    table.string("phone").notNullable();
-    table.enum("role", ["super_admin", "artist", "artist_manager", "user"]).notNullable().defaultTo("user");
+    table.string("name").notNullable();
     table.date("dob");
     table.enum("gender", ["male", "female", "other"]);
-    table.string("address");
+    table.text("address");
+    table.integer("first_release_year");
+    table.uuid("user_id").notNullable().references("id").inTable("users");
+    table.integer("no_of_albums_released").defaultTo(0);
     table.timestamp("created_at").defaultTo(knex.fn.now());
     table.timestamp("updated_at").defaultTo(knex.fn.now());
+
   })
 };
 
@@ -25,5 +23,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.dropTable("users")
+  return knex.schema.dropTable("artists")
 };
