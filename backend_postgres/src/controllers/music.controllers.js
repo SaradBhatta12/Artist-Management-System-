@@ -78,7 +78,7 @@ export const getAllMusics = async (req, res, next) => {
 export const getMusicById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const music = await db.query(musicQuery, [id]);
+    const music = await db.query(musicQuery, [id]);   // Fetch the music by ID 
     if (!music.rows.length) {
       return res
         .status(404)

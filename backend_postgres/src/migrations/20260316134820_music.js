@@ -4,7 +4,6 @@
  */
 exports.up = function (knex) {
 
-
   return knex.schema.createTable("music", table => {
     table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
     table.string("title").notNullable();
